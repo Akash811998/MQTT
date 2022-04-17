@@ -35,23 +35,28 @@ typedef struct _socket
 #define TCP_RESET    4
 #define TCP_REST_ACK 20
 
-
-
 //current TCP and mqtt states
-#define TCP_IDLE                0
-#define TCP_SEND_ARP            1
-#define TCP_RECEIVE_ARP         2
-#define TCP_SEND_SYN            3
-#define TCP_RECEIVE_SYN_ACK     4
-#define TCP_SEND_ACK            5
-#define TCP_LIVE                6
-#define TCP_SEND_FIN            7
-#define TCP_RCV_FIN_ACK         8
-#define TCP_RCV_FIN             9
-#define MQTT_SEND_PUBLISH       10
-#define MQTT_SEND_SUBSCRIBE     11
-#define
-#define
-#define
+#define TCP_IDLE                    0
+#define TCP_SEND_ARP                1
+#define TCP_RECEIVE_ARP             2
+#define TCP_SEND_SYN                3
+#define TCP_RECEIVE_SYN_ACK         4
+#define TCP_SEND_ACK                5
+#define TCP_LIVE                    6
+#define TCP_SEND_FIN                7
+#define TCP_RCV_FIN_ACK             8
+#define TCP_RCV_FIN                 9
+#define MQTT_CONNECT                10
+#define MQTT_CONNECT_ACK            11
+#define MQTT_SEND_PUBLISH0          12
+#define MQTT_SEND_PUBLISH1          13
+#define MQTT_RCV_PUBLISH_ACK        14
+#define MQTT_SEND_SUBSCRIBE         15
+#define MQTT_RCV_SUBSCRIBE_ACK      16
+#define MQTT_SEND_UNSUBSCRIBE       17
+#define MQTT_SEND_UNSUBSCRIBE_ACK   18
+#define MQTT_PING_REQ               19
+#define MQTT_PING_RESP              20
+#define MQTT_DISCONNECT             21
 
 #endif /* TCP_H_ */
