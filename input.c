@@ -75,8 +75,17 @@ void processInputCommands()
                 publishData=getFieldString(&data, 2);
                 setTcpstate(mqttPublishData);
             }
-
         }
+        else if(isCommand(&data,"disconnect",0))
+        {
+            valid=true;
+            setTcpstate(TCP_SEND_FIN);
+        }
+        else if(isCommand(&data,"reboot",0))
+        {
+            //if tcp active, then send a fin message and deactivate the TCP
+        }
+
 
 
     }

@@ -10,6 +10,8 @@
 #include "TCP.h"
 
 uint8_t curTcpState;
+extern uint32_t sequence;
+extern uint32_t acknowledge;
 
 void setTcpstate(uint8_t state)
 {
@@ -87,13 +89,13 @@ bool isTcpAcknowledgment(etherHeader *ether)
         ok&=(ether->destAddress[4]==6);
         ok&=(ether->destAddress[5]==117);
 
-        ok&=(((htons(tcp->offsetFields)) & 0x0FFF)==TCP_SYNACK) || (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_PUSH_ACK) || (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_FIN_ACK) ||  (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_REST_ACK); //checking all the possibilities for ACK
-        ok&=(tcp->destPort==htons(23));
+        //ok&=(((htons(tcp->offsetFields)) & 0x0FFF)==TCP_SYNACK) || (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_PUSH_ACK) || (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_FIN_ACK) ||  (((htons(tcp->offsetFields)) & 0x0FFF)==TCP_REST_ACK); //checking all the possibilities for ACK
+        ok&= ((htons(tcp->offsetFields)) & 0x0010; //checking if the ack bit is set
+        //ok&=(tcp->destPort==htons(23));
     }
 
     return ok;
 }
-
 bool isTcpSyn(etherHeader *ether)
 {
     ipHeader* ip = (ipHeader*)ether->data;
@@ -110,11 +112,29 @@ bool isTcpSyn(etherHeader *ether)
         ok&=(ether->destAddress[4]==6);
         ok&=(ether->destAddress[5]==117);
 
-        ok&=((tcp->offsetFields) && 0x02);
-        ok&=(tcp->destPort==htons(23));
+        ok&=((tcp->offsetFields) & 0x0002);
+        //ok&=(tcp->destPort==htons(23));
     }
 
     return ok;
 }
 
+void handleTcpSegment(etherHeader *ether)
+{
+    if(isTcpAcknowledgment())
+    {
+        ipHeader* ip = (ipHeader*)ether->data;
+        tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
+        uint16_t offset=(htons(tcp->offsetFields)) & 0x0FFF;
+        if(offset==TCP_SYNACK && curTcpState==TCP_RECEIVE_SYN_ACK)
+        {
+            sequence=tcp->acknowledgementNumber;
+            acknowledge=htonl(tcp->sequenceNumber)+1;
+            curTcpState=TCP_SEND_ACK;
+        }
+
+    }
+
+
+}
 

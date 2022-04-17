@@ -97,6 +97,8 @@ char* publishTopic;
 char* publishData;
 char* subscribeTopic;
 char* unsubscribeTopic;
+uint32_t sequence=100;
+uint32_t acknowledge=0;
 
 int main(void)
 {
@@ -160,6 +162,9 @@ int main(void)
             {
             	if (etherIsIpUnicast(data))
             	{
+            	    if(etherIsTcp(data))
+            	        handleTcpSegment(data);
+
             		// handle icmp ping request
 					if (etherIsPingRequest(data))
 					{

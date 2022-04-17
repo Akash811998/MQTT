@@ -8,8 +8,6 @@
 #ifndef TCP_H_
 #define TCP_H_
 
-#include <stdint.h>
-#include <stdbool.h>
 #include "eth0.h"
 
 void sendTcpMsg(etherHeader *ether,uint16_t,uint16_t);
@@ -17,6 +15,7 @@ bool isTcpAcknowledgment(etherHeader *ether);
 bool isTcpSyn(etherHeader *ether);
 void setTcpstate(uint8_t state);
 uint8_t getTcpstate();
+void handleTcpSegment(etherHeader *ether);
 
 typedef struct _socket
 {
@@ -35,7 +34,7 @@ typedef struct _socket
 #define TCP_RESET    4
 #define TCP_REST_ACK 20
 
-//current TCP and mqtt states
+//current TCP and  states
 #define TCP_IDLE                    0
 #define TCP_SEND_ARP                1
 #define TCP_RECEIVE_ARP             2

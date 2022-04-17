@@ -8,6 +8,9 @@
 #ifndef MQTT_H_
 #define MQTT_H_
 
+#include <stdint.h>
+#include <stdbool.h>
+#include "eth0.h"
 
 #define QOS0                    0x00
 #define QOS1                    0x02
@@ -67,6 +70,13 @@ typedef struct _mqttVariableHeader
     uint16_t keep_alive;
     uint8_t data[0];
 }mqttVariableHeader;
+
+
+void mqttSendPublish();
+void mqttSendSubscribe();
+void mqttSendUnsubscribe();
+bool isMqttPublish();
+bool isMqttAck();
 
 
 
