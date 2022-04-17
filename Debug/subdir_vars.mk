@@ -1,0 +1,101 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+SHELL = cmd.exe
+
+# Add inputs and outputs from these tool invocations to the build variables 
+CMD_SRCS += \
+../tm4c123gh6pm.cmd 
+
+C_SRCS += \
+../TCP.c \
+../clock.c \
+../eeprom.c \
+../eth0.c \
+../ethernet.c \
+../gpio.c \
+../input.c \
+../mqtt.c \
+../spi0.c \
+../timer.c \
+../tm4c123gh6pm_startup_ccs.c \
+../uart0.c \
+../wait.c 
+
+C_DEPS += \
+./TCP.d \
+./clock.d \
+./eeprom.d \
+./eth0.d \
+./ethernet.d \
+./gpio.d \
+./input.d \
+./mqtt.d \
+./spi0.d \
+./timer.d \
+./tm4c123gh6pm_startup_ccs.d \
+./uart0.d \
+./wait.d 
+
+OBJS += \
+./TCP.obj \
+./clock.obj \
+./eeprom.obj \
+./eth0.obj \
+./ethernet.obj \
+./gpio.obj \
+./input.obj \
+./mqtt.obj \
+./spi0.obj \
+./timer.obj \
+./tm4c123gh6pm_startup_ccs.obj \
+./uart0.obj \
+./wait.obj 
+
+OBJS__QUOTED += \
+"TCP.obj" \
+"clock.obj" \
+"eeprom.obj" \
+"eth0.obj" \
+"ethernet.obj" \
+"gpio.obj" \
+"input.obj" \
+"mqtt.obj" \
+"spi0.obj" \
+"timer.obj" \
+"tm4c123gh6pm_startup_ccs.obj" \
+"uart0.obj" \
+"wait.obj" 
+
+C_DEPS__QUOTED += \
+"TCP.d" \
+"clock.d" \
+"eeprom.d" \
+"eth0.d" \
+"ethernet.d" \
+"gpio.d" \
+"input.d" \
+"mqtt.d" \
+"spi0.d" \
+"timer.d" \
+"tm4c123gh6pm_startup_ccs.d" \
+"uart0.d" \
+"wait.d" 
+
+C_SRCS__QUOTED += \
+"../TCP.c" \
+"../clock.c" \
+"../eeprom.c" \
+"../eth0.c" \
+"../ethernet.c" \
+"../gpio.c" \
+"../input.c" \
+"../mqtt.c" \
+"../spi0.c" \
+"../timer.c" \
+"../tm4c123gh6pm_startup_ccs.c" \
+"../uart0.c" \
+"../wait.c" 
+
+
