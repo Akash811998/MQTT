@@ -72,11 +72,13 @@ typedef struct _mqttVariableHeader
 }mqttVariableHeader;
 
 
-void mqttSendPublish();
-void mqttSendSubscribe();
-void mqttSendUnsubscribe();
-bool isMqttPublish();
-bool isMqttAck();
+void mqttSendPublish(etherHeader *ether);
+void mqttSendSubscribe(etherHeader *ether);
+void mqttSendUnsubscribe(etherHeader *ether);
+bool isMqttPublish(etherHeader *ether);
+bool isMqttAck(etherHeader *ether);
+void mqttSendDisconnect(etherHeader *ether);
+void mqttSendConnect(etherHeader *ether);
 
 
 

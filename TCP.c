@@ -134,7 +134,10 @@ void handleTcpSegment(etherHeader *ether)
         }
 
     }
+}
 
+void buildTcpHeader(etherHeader *ether,uint16_t sourcePort,uint16_t destinationPort,uint16_t flag)
+{
 
 }
 

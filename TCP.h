@@ -16,6 +16,7 @@ bool isTcpSyn(etherHeader *ether);
 void setTcpstate(uint8_t state);
 uint8_t getTcpstate();
 void handleTcpSegment(etherHeader *ether);
+void buildTcpHeader(etherHeader *ether,uint8_t sourcePort[4],uint8_t destinationPort[4],uint16_t flag);
 
 typedef struct _socket
 {
@@ -28,7 +29,7 @@ typedef struct _socket
 #define TCP_SYNACK   18
 #define TCP_ACK      16
 #define TCP_PSH      8
-#define TCP_PUSH_ACK 24
+#define TCP_PUSH_ACK 24    //0x0018
 #define TCP_FIN      1
 #define TCP_FIN_ACK  17
 #define TCP_RESET    4
