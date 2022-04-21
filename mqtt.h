@@ -16,6 +16,18 @@
 #define QOS1                    0x02
 #define QOS2                    0x04
 
+//#define SEND_CONNECT            0x10
+//#define SEND_PUBLISH_QOS0       0x30
+//#define SEND_PUBLISH_QOS1       0x32
+//#define SEND_PUBLISH_QOS2       0x34
+//#define SEND_SUBSCRIBE          0x82
+//#define SEND_UNSUBSCRIBE        0xA2
+//#define SEND_DISCONNECT         0xE0
+//#define SEND_PING               0xC0
+//#define RECEIVE_CONNECT_ACK     0x20
+//#define RECEIVE_SUBSCRIBE_ACK   0x90
+//#define RECEIVE__ACK
+
 typedef enum _QOS
 {
     QOS=0,
@@ -24,11 +36,13 @@ typedef enum _QOS
 
 }QOS;
 
-typedef enum _packetType
+typedef enum _mqttPacketType
 {
     CONNECT = 0x10,   //COMBINATION OF CCONTROL FIELD AND CONTROL FLAGS
     CONNACK = 0x20,
-    PUBLISH = 0x30,
+    PUBLISH_QOS0 = 0x30,
+    PUBLISH_QOS1 = 0x32,
+    PUBLISH_QOS2 = 0x34,
     PUBACK = 0x40,
     PUBREC=0x50,
     PUBREL=0x62,
@@ -37,10 +51,10 @@ typedef enum _packetType
     SUBACK = 0x90,
     UNSUBSCRIBE = 0xA2,
     UNSUBACK = 0xB0,
-    PINGERQ = 0xC0,
+    PINGREQ = 0xC0,
     PINGRESP = 0xD0,
     DISCONNECT = 0xE0
-};
+}mqttPacketType;
 
 //defining the connect flags
  typedef enum _connect_flags
@@ -71,14 +85,16 @@ typedef struct _mqttVariableHeader
     uint8_t data[0];
 }mqttVariableHeader;
 
-
+void mqttSendConnect(etherHeader *ether);
 void mqttSendPublish(etherHeader *ether);
 void mqttSendSubscribe(etherHeader *ether);
 void mqttSendUnsubscribe(etherHeader *ether);
-bool isMqttPublish(etherHeader *ether);
-bool isMqttAck(etherHeader *ether);
+bool isMqttConnectAck(etherHeader *ether);
+bool isMqttSubscribeAck(etherHeader *ether);
+bool isMqttPublishAck(etherHeader *ether);
+void mqttSendPing(etherHeader *ether);
 void mqttSendDisconnect(etherHeader *ether);
-void mqttSendConnect(etherHeader *ether);
+
 
 
 
