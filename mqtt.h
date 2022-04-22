@@ -28,17 +28,16 @@
 //#define RECEIVE_SUBSCRIBE_ACK   0x90
 //#define RECEIVE__ACK
 
-typedef enum _QOS
-{
-    QOS=0,
-    QOS=1,
-    QOS=2;
-
-}QOS;
+//typedef enum _QOS
+//{
+//    QOS0=0,
+//    QOS1=1,
+//    QOS2=2;
+//}QOS;
 
 typedef enum _mqttPacketType
 {
-    CONNECT = 0x10,   //COMBINATION OF CCONTROL FIELD AND CONTROL FLAGS
+    CONNECT = 0x10,         //COMBINATION OF CCONTROL FIELD AND CONTROL FLAGS
     CONNACK = 0x20,
     PUBLISH_QOS0 = 0x30,
     PUBLISH_QOS1 = 0x32,
@@ -59,19 +58,19 @@ typedef enum _mqttPacketType
 //defining the connect flags
  typedef enum _connect_flags
 {
-    CLEAN_SESSION=0x02, //1th bit
-    WILL_FLAG=0x04,    //2th bit
-    WILL_QOS=0x10,    //4th bit
-    WILL_RETAIN=0x20,  //5th bit
-    PASSWORD_FLAG=0x40,  //6th bit
-    USER_NAME_FLAG=0x80;  //7th bit
+    CLEAN_SESSION=0x02,     //1th bit
+    WILL_FLAG=0x04,         //2th bit
+    WILL_QOS=0x10,          //4th bit
+    WILL_RETAIN=0x20,       //5th bit
+    PASSWORD_FLAG=0x40,     //6th bit
+    USER_NAME_FLAG=0x80;    //7th bit
 }connect_flags;
 
 
 typedef struct _mqttHeader
 {
     uint8_t control_header;
-    uint8_t remaining_length[4];
+    uint8_t remaining_length;
     uint8_t data[0];
 }mqttHeader;
 
@@ -85,20 +84,39 @@ typedef struct _mqttVariableHeader
     uint8_t data[0];
 }mqttVariableHeader;
 
-void mqttSendConnect(etherHeader *ether);
-void mqttSendPublish(etherHeader *ether);
-void mqttSendSubscribe(etherHeader *ether);
-void mqttSendUnsubscribe(etherHeader *ether);
+typedef struct _mqttClientHeader
+{
+    uint16_t client_id_length;
+    uint8_t clientName[];
+    uint8_t data[0];
+}mqttClientHeader;
+
+typedef struct _mqttSubscribeHeader
+{
+    uint16_t packet_id;
+    uint16_t topic_length;
+    char topic_name[];
+    uint8_t requested_qos;
+}mqttSubscribeHeader;
+
+typedef struct _mqttUnsubscribeHeader
+{
+    uint16_t packet_id;
+    uint16_t topic_length;
+    char topic_name[];
+}mqttUnsubscribeHeader;
+
+
+void mqttSendConnect(etherHeader *ether,char* ,uint8_t);
+void mqttSendPublish(etherHeader *ether,uint8_t,char*,char*);
+void mqttSendSubscribe(etherHeader *ether,char*,uint16_t);
+void mqttSendUnsubscribe(etherHeader *ether,char*,uint16_t);
 bool isMqttConnectAck(etherHeader *ether);
 bool isMqttSubscribeAck(etherHeader *ether);
 bool isMqttPublishAck(etherHeader *ether);
 void mqttSendPing(etherHeader *ether);
 void mqttSendDisconnect(etherHeader *ether);
-
-
-
-
-
+bool isMqttPingAck(etherHeader *ether);
 
 
 #endif /* MQTT_H_ */

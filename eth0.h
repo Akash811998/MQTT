@@ -25,6 +25,8 @@
 #ifndef ETH0_H_
 #define ETH0_H_
 
+
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -113,18 +115,7 @@ typedef struct _dhcpFrame // 240 or more bytes
   uint8_t options[0];
 } dhcpFrame;
 
-typedef struct _tcpHeader // 20 or more bytes
-{
-  uint16_t sourcePort;
-  uint16_t destPort;
-  uint32_t sequenceNumber;
-  uint32_t acknowledgementNumber;
-  uint16_t offsetFields;
-  uint16_t windowSize;
-  uint16_t checksum;
-  uint16_t urgentPointer;
-  uint8_t  data[0];
-} tcpHeader;
+
 
 #define ETHER_UNICAST        0x80
 #define ETHER_BROADCAST      0x01
@@ -184,5 +175,6 @@ uint16_t htons(uint16_t value);
 #define ntohs htons
 #define IP_ADD_LENGTH 4
 #define HW_ADD_LENGTH 6
+#define ETHER_HEADER_SIZE 0x0E
 
 #endif

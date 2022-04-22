@@ -313,3 +313,10 @@ void displayConnectionInfo()
     else
         putsUart0("Link is down\n");
 }
+uint8_t strLength(char* a)
+{
+    uint8_t len=0,i=0;
+    while(a[i++]!='\0')
+        len++;
+    return len;
+}

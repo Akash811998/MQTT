@@ -18,12 +18,27 @@ uint8_t getTcpstate();
 void handleTcpSegment(etherHeader *ether);
 void buildTcpHeader(etherHeader *ether,uint8_t sourcePort[4],uint8_t destinationPort[4],uint16_t flag);
 
+#define TCP_HEADER_LENGTH 20
+
 typedef struct _socket
 {
     uint8_t ip_address[4];
     uint16_t port;
     uint8_t mac_address[6];
 } socket;
+
+typedef struct _tcpHeader // 20 or more bytes
+{
+  uint16_t sourcePort;
+  uint16_t destPort;
+  uint32_t sequenceNumber;
+  uint32_t acknowledgementNumber;
+  uint16_t offsetFields;
+  uint16_t windowSize;
+  uint16_t checksum;
+  uint16_t urgentPointer;
+  uint8_t  data[0];
+} tcpHeader;
 
 #define TCP_SYNC     2
 #define TCP_SYNACK   18

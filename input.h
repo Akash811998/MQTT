@@ -18,6 +18,7 @@ int number_of_digits(int);
 uint8_t strCompare(char*, const char*);
 void processInputCommands();
 void displayConnectionInfo();
+uint8_t strLength(char*);
 
 
 #endif /* INPUT_H_ */
