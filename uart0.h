@@ -20,7 +20,7 @@
 
 #ifndef UART0_H_
 #define UART0_H_
-
+#include "input.h"
 //-----------------------------------------------------------------------------
 // Subroutines
 //-----------------------------------------------------------------------------
@@ -31,5 +31,6 @@ void putcUart0(char c);
 void putsUart0(char* str);
 char getcUart0();
 bool kbhitUart0();
+void getsUart0(USER_DATA* data);
 
 #endif

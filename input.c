@@ -36,13 +36,7 @@ bool flag=1;//for parsefield
 
 char str[50]; //for sprintf
 
-typedef struct _USER_DATA
-{
-    char buffer[MAX_CHARS+1];
-    uint8_t fieldCount;
-    uint8_t fieldPosition[MAX_FIELDS];
-    char fieldType[MAX_FIELDS];
-} USER_DATA;
+
 USER_DATA data;//defining the data variable as a global
 
 extern char* publishTopic;
@@ -50,46 +44,6 @@ extern char* publishData;
 extern char* subscribeTopic;
 extern char* unsubscribeTopic;
 
-
-void processInputCommands()
-{
-    if(kbhitUart0())
-    {
-        getsUart0(&data);
-        parseFields(&data);
-        bool valid=false;
-
-        if(isCommand(&data,"ifconfig",0)) //display the details
-        {
-            displayConnectionInfo();
-            valid=true;
-        }
-        else if(isCommand(&data,"publish",2)) //publish the topic name and the data
-        {
-            valid=true;
-            if(curTcpState!=mqttActive)
-                putsUart0("Connection to the broker should be published before you publish a message");
-            else
-            {
-                publishTopic=getFieldString(&data, 1);
-                publishData=getFieldString(&data, 2);
-                setTcpstate(mqttPublishData);
-            }
-        }
-        else if(isCommand(&data,"disconnect",0))
-        {
-            valid=true;
-            setTcpstate(TCP_SEND_FIN);
-        }
-        else if(isCommand(&data,"reboot",0))
-        {
-            //if tcp active, then send a fin message and deactivate the TCP
-        }
-
-
-
-    }
-}
 bool isCommand(USER_DATA* data, const char strCommand[], uint8_t minArguments)
 {
     int i=data->fieldPosition[0];
@@ -319,4 +273,62 @@ uint8_t strLength(char* a)
     while(a[i++]!='\0')
         len++;
     return len;
+}
+
+void processInputCommands()
+{
+    if(kbhitUart0())
+    {
+        getsUart0(&data);
+        parseFields(&data);
+        bool valid=false;
+
+        if(isCommand(&data,"ifconfig",0)) //display the details
+        {
+            displayConnectionInfo();
+            valid=true;
+        }
+        else if(isCommand(&data,"publish",2)) //publish the topic name and the data
+        {
+            valid=true;
+            if(getTcpState()!=mqttActive)
+                putsUart0("Connection to the broker should be published before you publish a message");
+            else
+            {
+                publishTopic=getFieldString(&data, 1);
+                publishData=getFieldString(&data, 2);
+                setTcpState(mqttPublishData);
+            }
+        }
+        else if(isCommand(&data,"disconnect",0)) //sends a disconnect request to the broker
+        {
+            valid=true;
+            setTcpState(TCP_SEND_FIN);
+        }
+        else if(isCommand(&data,"reboot",0))
+        {
+            //if tcp active, then send a fin message and deactivate the TCP
+            //basically send a MQTT disconnect message and restart the device
+            //then restart the device
+        }
+        else if(isCommand(&data,"help",0))
+        {
+
+        }
+        else if(isCommand(&data,"set",0)) //set the IP address or mqtt ip address
+        {
+
+        }
+        else if(isCommand(&data,"subscribe",1))  //subscribe to a topic
+        {
+
+        }
+        else if(isCommand(&data,"unsubscribe",1)) //unsubscribe to a topic
+        {
+
+        }
+
+
+
+    }
 }

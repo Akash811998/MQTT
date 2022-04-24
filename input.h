@@ -10,7 +10,13 @@
 
 
 
-
+typedef struct _USER_DATA
+{
+    char buffer[MAX_CHARS+1];
+    uint8_t fieldCount;
+    uint8_t fieldPosition[MAX_FIELDS];
+    char fieldType[MAX_FIELDS];
+} USER_DATA;
 int power(int,int);
 
 char* i_to_a(int);

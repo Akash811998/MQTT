@@ -17,6 +17,7 @@ eth0.obj: ../wait.h
 eth0.obj: ../gpio.h
 eth0.obj: ../spi0.h
 eth0.obj: ../eth0.h
+eth0.obj: ../TCP.h
 
 ../eth0.c:
 
@@ -51,4 +52,6 @@ C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/stdbool.h:
 ../spi0.h:
 
 ../eth0.h:
+
+../TCP.h:
 

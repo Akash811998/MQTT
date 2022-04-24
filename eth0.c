@@ -29,6 +29,7 @@
 #include "gpio.h"
 #include "spi0.h"
 #include "eth0.h"
+#include "TCP.h"
 
 // Pins
 #define CS PORTA,3
@@ -122,15 +123,15 @@
 uint8_t nextPacketLsb = 0x00;
 uint8_t nextPacketMsb = 0x00;
 uint8_t sequenceId = 1;
-uint8_t hwAddress[HW_ADD_LENGTH] = {2,3,4,5,6,7};
-uint8_t ipAddress[IP_ADD_LENGTH] = {0,0,0,0};
-uint8_t ipSubnetMask[IP_ADD_LENGTH] = {0,0,0,0};
-uint8_t ipGwAddress[IP_ADD_LENGTH] = {0,0,0,0};
-uint8_t ipDnsAddress[IP_ADD_LENGTH] = {0,0,0,0};
-uint8_t ipTimeServerAddress[IP_ADD_LENGTH] = {0,0,0,0};
-uint8_t dhcpServerAddress[IP_ADD_LENGTH] = {0,0,0,0};
+uint8_t hwAddress[HW_ADD_LENGTH] = {2,3,4,5,6,7};       //MY MAC ADDRESS
+uint8_t ipAddress[IP_ADD_LENGTH] = {0,0,0,0};           //MY IP ADDRESS
+uint8_t ipSubnetMask[IP_ADD_LENGTH] = {0,0,0,0};        //IP SUBNET MASK
+uint8_t ipGwAddress[IP_ADD_LENGTH] = {0,0,0,0};         //IP GATEWAY ADDRESS
+uint8_t ipDnsAddress[IP_ADD_LENGTH] = {0,0,0,0};        //IP DNS ADDRESS
+//uint8_t ipTimeServerAddress[IP_ADD_LENGTH] = {0,0,0,0}; //IP TIMESERVER ADDRESS
+//uint8_t dhcpServerAddress[IP_ADD_LENGTH] = {0,0,0,0};
 
-bool    dhcpEnabled = true;
+//bool    dhcpEnabled = true;
 
 // ------------------------------------------------------------------------------
 //  Structures
@@ -250,7 +251,7 @@ void etherReadMemStart(void)
 {
     etherCsOn();    //switch on CS
     writeSpi0Data(0x3A);  // 3A because the opcode and argument of read buffer memory is 3A
-                          //send the command to to ethernet module to say that we want to read from read buffer memory
+    //send the command to to ethernet module to say that we want to read from read buffer memory
     readSpi0Data();  //then from the SPI data  register read the data which has come
 }
 
@@ -297,7 +298,7 @@ void etherInit(uint16_t mode)
     etherWriteReg(ERXSTH, HIBYTE(0x0000));
     etherWriteReg(ERXNDL, LOBYTE(0x1A09));
     etherWriteReg(ERXNDH, HIBYTE(0x1A09));
-   
+
     // initialize receiver write and read ptrs
     // at startup, will write from 0 to 1A08 only and will not overwrite rd ptr
     etherWriteReg(ERXWRPTL, LOBYTE(0x0000));
@@ -315,7 +316,7 @@ void etherInit(uint16_t mode)
     // bring mac out of reset
     etherSetBank(MACON2);
     etherWriteReg(MACON2, 0);
-  
+
     // enable mac rx, enable pause control for full duplex
     etherWriteReg(MACON1, TXPAUS | RXPAUS | MARXEN);
 
@@ -431,7 +432,7 @@ uint16_t etherGetPacket(etherHeader *ether, uint16_t maxSize)
 
     // decrement packet counter so that PKTIF is maintained correctly
     etherSetReg(ECON2, PKTDEC);  //hardware increments the packet counter, we decrement it
-                                 //whenever the packet count is not zero, an interrupt it issued to the host saying that theres a packet available
+    //whenever the packet count is not zero, an interrupt it issued to the host saying that theres a packet available
 
     return size;
 }
@@ -469,7 +470,7 @@ bool etherPutPacket(etherHeader *ether, uint16_t size)
 
     // stop write
     etherWriteMemStop();
-  
+
     // request transmit
     etherWriteReg(ETXSTL, LOBYTE(0x1A0A));
     etherWriteReg(ETXSTH, HIBYTE(0x1A0A));
@@ -501,7 +502,7 @@ void etherSumWords(void* data, uint16_t sizeInBytes, uint32_t* sum)
             *sum += data_temp << 8;
         }
         else
-          *sum += *pData;
+            *sum += *pData;
         phase = 1 - phase;
         pData++;
     }
@@ -513,7 +514,7 @@ uint16_t getEtherChecksum(uint32_t sum)
     uint16_t result;
     // this is based on rfc1071
     while ((sum >> 16) > 0)
-      sum = (sum & 0xFFFF) + (sum >> 16);
+        sum = (sum & 0xFFFF) + (sum >> 16);
     result = sum & 0xFFFF;
     return ~result;
 }
@@ -527,13 +528,6 @@ void etherCalcIpChecksum(ipHeader* ip)
     ip->headerChecksum = getEtherChecksum(sum);
 }
 
-void etherCalcTcpChecksum(tcpHeader* tcp)
-{
-   //calculate TCP checksum
-    uint32_t sum = 0;
-
-
-}
 
 // Converts from host to network order and vice versa
 uint16_t htons(uint16_t value)
@@ -544,7 +538,7 @@ uint16_t htons(uint16_t value)
 uint32_t htonl(uint32_t value)
 {
     return ((value & 0xFF000000) >> 24) + ((value & 0x00FF0000) >> 8) +
-           ((value & 0x0000FF00) << 8) + ((value & 0x000000FF) << 24);
+            ((value & 0x0000FF00) << 8) + ((value & 0x000000FF) << 24);
 }
 
 // Determines whether packet is IP datagram
@@ -625,14 +619,14 @@ void etherSendPingResponse(etherHeader *ether)
 bool etherIsArpRequest(etherHeader *ether)
 {
     arpPacket *arp = (arpPacket*)ether->data;
-    bool ok;
+    bool ok=0;
     uint8_t i = 0;
     ok = (ether->frameType == htons(0x0806));
-    if (ok)
-        ok& = (arp->op == htons(1));
+    if(ok)
+        ok&=(arp->op==htons(1));
     while (ok & (i < IP_ADD_LENGTH))
     {
-        ok& = (arp->destIp[i] == ipAddress[i]);
+        ok&=(arp->destIp[i]==ipAddress[i]);
         i++;
     }
 
@@ -644,15 +638,19 @@ bool etherIsArpResponse(etherHeader *ether)
 {
     arpPacket *arp = (arpPacket*)ether->data;
     bool ok;
+    uint8_t i = 0;
     ok = (ether->frameType == htons(0x0806));
     if (ok)
-        ok& = (arp->op == htons(2));
+        ok&=(arp->op==htons(2));
     while (ok & (i < IP_ADD_LENGTH))
     {
-        ok& = (arp->destIp[i] == ipAddress[i]);
+        ok&= (arp->destIp[i] == ipAddress[i]);
+        i++;
     }
     return ok;
 }
+
+
 
 // Sends an ARP response given the request data
 void etherSendArpResponse(etherHeader *ether)
@@ -803,41 +801,19 @@ void etherSendUdpResponse(etherHeader *ether, uint8_t *udpData, uint8_t udpSize)
 
 // Determines whether packet is DHCP
 // Must be a UDP packet
-bool etherIsDhcpResponse(etherHeader* ether)
-{
-    ipHeader *ip = (ipHeader*)ether->data;
-    uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4;
-    udpHeader* udp = (udpHeader*)((uint8_t*)ip + ipHeaderLength);
-    bool ok;
-    ok = (udp->sourcePort == htons(67)) & (udp->destPort == htons(68));
-    return ok;
-}
+//bool etherIsDhcpResponse(etherHeader* ether)
+//{
+//    ipHeader *ip = (ipHeader*)ether->data;
+//    uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4;
+//    udpHeader* udp = (udpHeader*)((uint8_t*)ip + ipHeaderLength);
+//    bool ok;
+//    ok = (udp->sourcePort == htons(67)) & (udp->destPort == htons(68));
+//    return ok;
+//}
 
 // Determines whether packet is TCP packet
 // Must be an IP packet
-bool etherIsTcp(etherHeader* ether)
-{
-   ipHeader *ip = (ipHeader*)ether->data;
-    uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4;
-    tcpHeader* tcp = (tcpHeader*)((uint8_t*)ip + ipHeaderLength);
-    uint32_t sum = 0;
-    bool ok;
-    uint16_t tmp16;
-    ok = (ip->protocol == 6);
-    if (ok)
-    {
-        // 32-bit sum over pseudo-header
-        etherSumWords(ip->sourceIp, 8, &sum);
-        tmp16 = ip->protocol;
-        sum += (tmp16 & 0xff) << 8;
-        tmp16 = htons(ntohs(ip->length) - (ip->revSize & 0xF) * 4);
-        etherSumWords(&tmp16, 2, &sum);
-        // add tcp header and data
-        etherSumWords(tcp, ntohs(ip->length) - (ip->revSize & 0xF) * 4, &sum);
-        ok = (getEtherChecksum(sum) == 0);
-    }
-    return ok;
-}
+
 
 uint16_t etherGetId(void)
 {

@@ -1,3 +1,4 @@
+
 // Ethernet Example
 // Jason Losh
 
@@ -50,6 +51,7 @@
 #include "eth0.h"
 #include "gpio.h"
 #include "spi0.h"
+#include <time.h>
 #include "uart0.h"
 #include "wait.h"
 #include "input.h"
@@ -61,14 +63,12 @@
 #define GREEN_LED PORTF,3
 #define PUSH_BUTTON PORTF,4
 
-
+#define HTTP_PORT 0x0050    //WHICH IS NOTHING BUT 80 IN DECIMAL
+#define MQTT PORT 0X075B    //WHICH IS NOTHIGN BUT 1883 IN DECIMAL
 
 //-----------------------------------------------------------------------------
 // Subroutines                
 //-----------------------------------------------------------------------------
-
-
-
 
 // Initialize Hardware
 void initHw()
@@ -86,12 +86,10 @@ void initHw()
     selectPinPushPullOutput(BLUE_LED);
     selectPinDigitalInput(PUSH_BUTTON);
 }
-//-----------------------------------------------------------------------------
-// Main
-//-----------------------------------------------------------------------------
 
 // Max packet is calculated as:
 // Ether frame header (18) + Max MTU (1500) + CRC (4)
+//ether grame header= 4 bytes of ENC module packet and 14 bytes of ether header(src address, dest address and flags)
 #define MAX_PACKET_SIZE 1522
 char* publishTopic;
 char* publishData;
@@ -99,12 +97,18 @@ char* subscribeTopic;
 char* unsubscribeTopic;
 uint32_t sequence=100;
 uint32_t acknowledge=0;
+uint16_t source_port=0;
 
+char* clientID="akash";
+
+//-----------------------------------------------------------------------------
+// Main
+//-----------------------------------------------------------------------------
 int main(void)
 {
     uint8_t* udpData;
-    uint8_t data[MAX_PACKET_SIZE];
-
+    uint8_t buffer[MAX_PACKET_SIZE];
+    etherHeader *data = (etherHeader*) buffer;
 
     // Init controller
     initHw();
@@ -133,10 +137,32 @@ int main(void)
     // Main Loop
     // RTOS and interrupts would greatly improve this code,
     // but the goal here is simplicity
+
+
+    //choose a source port
+    //generate a random port for the source port
+    //the ephermal ports ranges from 49152 to 65535
+    //this uses the time at this  instant as the seed value
+    srand(time(0));
+    source_port=htons(49152+ (rand()%(16384-1))); //assigns an ephermal port as the source port
     while (true)
     {
         // Put terminal processing here
         processInputCommands();
+
+        if(isTcpEnabled())
+        {
+            uint8_t state=getTcpState();
+            if(state==TCP_SEND_SYN)
+            {
+                if(access_html_page==1)
+                {
+                    sendTcpMsg(data,TCP_SYN,HTTP_PORT,)
+                }
+
+            }
+
+        }
 
         // Packet processing
         if (etherIsDataAvailable())

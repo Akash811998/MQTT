@@ -109,3 +109,35 @@ bool kbhitUart0()
 {
     return !(UART0_FR_R & UART_FR_RXFE);
 }
+void getsUart0(USER_DATA* data)
+{
+    unsigned int ct=0;  //count
+    char c;
+    //    goto entry;
+    //    entry:
+    //    c[ct++]=getcUart0();
+    // if(ct>0 && (c[ct-1]==8 || c[ct-1]==128]))
+    //    {
+    //      ct--;
+    //      goto entry;
+    //    }
+    while(ct!=MAX_CHARS)
+    {
+        c=getcUart0();
+        if(c>=32 && c<127)
+            data->buffer[ct++]=c;
+        else if(c==8 || c==127)
+        {
+            if(ct>0)
+                ct--;
+            else
+                continue;
+        }
+        else if(ct==(MAX_CHARS) || (c==10 || c==13))
+        {
+            data->buffer[ct]='\0';
+            break;
+        }
+
+    }
+}

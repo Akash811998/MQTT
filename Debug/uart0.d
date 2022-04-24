@@ -14,6 +14,7 @@ uart0.obj: C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/sys/_s
 uart0.obj: C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/stdbool.h
 uart0.obj: ../tm4c123gh6pm.h
 uart0.obj: ../uart0.h
+uart0.obj: ../input.h
 
 ../uart0.c:
 
@@ -42,4 +43,6 @@ C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/stdbool.h:
 ../tm4c123gh6pm.h:
 
 ../uart0.h:
+
+../input.h:
 

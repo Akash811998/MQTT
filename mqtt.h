@@ -60,10 +60,12 @@ typedef enum _mqttPacketType
 {
     CLEAN_SESSION=0x02,     //1th bit
     WILL_FLAG=0x04,         //2th bit
-    WILL_QOS=0x10,          //4th bit
+    WILL_QOS0=0x00,         //3rd and 4th bit should be made 00
+    WILL_QOS1=0x10,         //3rd and 4th bit should be made 01
+    WILL_QOS0=0x18,         //3rd and 4th bit should be made 10
     WILL_RETAIN=0x20,       //5th bit
     PASSWORD_FLAG=0x40,     //6th bit
-    USER_NAME_FLAG=0x80;    //7th bit
+    USER_NAME_FLAG=0x80     //7th bit
 }connect_flags;
 
 
@@ -88,7 +90,6 @@ typedef struct _mqttClientHeader
 {
     uint16_t client_id_length;
     uint8_t clientName[];
-    uint8_t data[0];
 }mqttClientHeader;
 
 typedef struct _mqttSubscribeHeader

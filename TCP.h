@@ -10,15 +10,26 @@
 
 #include "eth0.h"
 
+
+#define TCP_HEADER_LENGTH 20
+#define IP_HEADER_LENGTH 20
+
+
 void sendTcpMsg(etherHeader *ether,uint16_t,uint16_t);
 bool isTcpAcknowledgment(etherHeader *ether);
 bool isTcpSyn(etherHeader *ether);
-void setTcpstate(uint8_t state);
-uint8_t getTcpstate();
+void setTcpState(uint8_t state);
+uint8_t getTcpState();
 void handleTcpSegment(etherHeader *ether);
 void buildTcpHeader(etherHeader *ether,uint8_t sourcePort[4],uint8_t destinationPort[4],uint16_t flag);
+bool etherCheckTcpCheckSum(etherHeader *ether);
+void etherCalcTcpChecksum(etherHeader *ether);
+bool etherIsTcp(etherHeader *ether);
+bool isTcpSyn(etherHeader *ether);
+bool isTcpSynAck(etherHeader *ether);
+bool isTcpFin(etherHeader *ether);
+bool isTcpReset(etherHeader *ether);
 
-#define TCP_HEADER_LENGTH 20
 
 typedef struct _socket
 {
@@ -40,7 +51,7 @@ typedef struct _tcpHeader // 20 or more bytes
   uint8_t  data[0];
 } tcpHeader;
 
-#define TCP_SYNC     2
+#define TCP_SYN     2
 #define TCP_SYNACK   18
 #define TCP_ACK      16
 #define TCP_PSH      8

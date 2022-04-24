@@ -156,7 +156,7 @@ void etherSendArpRequest(etherHeader *ether, uint8_t ipFrom[], uint8_t ipTo[]);
 bool etherIsUdp(etherHeader *ether);
 uint8_t* etherGetUdpData(etherHeader *ether);
 void etherSendUdpResponse(etherHeader *ether, uint8_t* udpData, uint8_t udpSize);
-bool etherIsTcp(etherHeader *ether);
+
 
 void etherEnableDhcpMode();
 void etherDisableDhcpMode();

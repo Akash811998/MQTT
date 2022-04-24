@@ -21,8 +21,8 @@ ethernet.obj: ../eth0.h
 ethernet.obj: ../gpio.h
 ethernet.obj: ../spi0.h
 ethernet.obj: ../uart0.h
-ethernet.obj: ../wait.h
 ethernet.obj: ../input.h
+ethernet.obj: ../wait.h
 ethernet.obj: ../TCP.h
 
 ../ethernet.c:
@@ -67,9 +67,9 @@ C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h
 
 ../uart0.h:
 
-../wait.h:
-
 ../input.h:
+
+../wait.h:
 
 ../TCP.h:
 
