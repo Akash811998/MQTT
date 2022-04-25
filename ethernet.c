@@ -51,11 +51,12 @@
 #include "eth0.h"
 #include "gpio.h"
 #include "spi0.h"
-#include <time.h>
+#include "time.h"
 #include "uart0.h"
 #include "wait.h"
 #include "input.h"
 #include "TCP.h"
+#include "mqtt.h"
 
 // Pins
 #define RED_LED PORTF,1
@@ -64,7 +65,7 @@
 #define PUSH_BUTTON PORTF,4
 
 #define HTTP_PORT 0x0050    //WHICH IS NOTHING BUT 80 IN DECIMAL
-#define MQTT PORT 0X075B    //WHICH IS NOTHIGN BUT 1883 IN DECIMAL
+#define MQTT_PORT 0X075B    //WHICH IS NOTHIGN BUT 1883 IN DECIMAL
 
 //-----------------------------------------------------------------------------
 // Subroutines                
@@ -95,12 +96,15 @@ char* publishTopic;
 char* publishData;
 char* subscribeTopic;
 char* unsubscribeTopic;
-uint32_t sequence=100;
-uint32_t acknowledge=0;
+
 uint16_t source_port=0;
+bool access_html_page=false;
 
 char* clientID="akash";
-
+extern uint8_t html_ip_address[4];
+extern uint8_t html_mac_address[6];
+extern uint8_t mqttIpAddress[4];
+extern uint8_t mqttMacAddress[6];
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
@@ -157,9 +161,33 @@ int main(void)
             {
                 if(access_html_page==1)
                 {
-                    sendTcpMsg(data,TCP_SYN,HTTP_PORT,)
+                    sendTcpMsg(data,TCP_SYN,HTTP_PORT,html_ip_address,html_mac_address,0);
                 }
+                else
+                {
+                    sendTcpMsg(data,TCP_SYN,MQTT_PORT,mqttIpAddress,mqttMacAddress,0);
+                }
+                setTcpState(TCP_RECEIVE_SYN_ACK);
 
+
+            }
+            else if(state==TCP_SEND_ACK)
+            {
+                if(access_html_page==1)
+                {
+                    sendTcpMsg(data,TCP_ACK,HTTP_PORT,html_ip_address,html_mac_address,0);
+                    setTcpState(TCP_LIVE);
+                }
+                else
+                {
+                    sendTcpMsg(data,TCP_ACK,MQTT_PORT,mqttIpAddress,mqttMacAddress,0);
+                    setTcpState(MQTT_CONNECT);
+                }
+            }
+            else if(state==MQTT_CONNECT)
+            {
+                mqttSendConnect(data,clientID,CLEAN_SESSION);
+                setTcpState(MQTT_CONNECT_ACK);
             }
 
         }

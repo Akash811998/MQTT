@@ -130,6 +130,7 @@ uint8_t ipGwAddress[IP_ADD_LENGTH] = {0,0,0,0};         //IP GATEWAY ADDRESS
 uint8_t ipDnsAddress[IP_ADD_LENGTH] = {0,0,0,0};        //IP DNS ADDRESS
 //uint8_t ipTimeServerAddress[IP_ADD_LENGTH] = {0,0,0,0}; //IP TIMESERVER ADDRESS
 //uint8_t dhcpServerAddress[IP_ADD_LENGTH] = {0,0,0,0};
+uint8_t html_ip_address[4]={0,0,0,0};                   //IP ADDRESS OF THE HTTP PAGE
 
 //bool    dhcpEnabled = true;
 
@@ -862,6 +863,20 @@ void etherGetIpSubnetMask(uint8_t mask[4])
     uint8_t i;
     for (i = 0; i < 4; i++)
         mask[i] = ipSubnetMask[i];
+}
+
+void etherSetHtmlIpAddress(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3)
+{
+    html_ip_address[0] = ip0;
+    html_ip_address[1] = ip1;
+    html_ip_address[2] = ip2;
+    html_ip_address[3] = ip3;
+}
+void etherGetHtmlIpAddress(uint8_t ip[4])
+{
+    uint8_t i;
+       for (i = 0; i < 4; i++)
+           ip[i] = html_ip_address[i];
 }
 
 // Sets IP gateway address

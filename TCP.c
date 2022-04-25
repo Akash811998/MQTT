@@ -8,14 +8,15 @@
 
 #include "tm4c123gh6pm.h"
 #include "TCP.h"
+#include "eth0.h"
 
 #define TCP_PROTOCOL 0x06
 #define DONT_FRAGMENT 0x4000
 
 uint8_t curTcpState=TCP_IDLE;
-extern uint32_t sequence;
-extern uint32_t acknowledge;
-
+uint32_t sequence=0;
+uint32_t acknowledge=0;
+extern uint16_t source_port;
 void setTcpState(uint8_t state)
 {
     curTcpState=state;
@@ -27,7 +28,7 @@ uint8_t getTcpState()
 
 void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],uint16_t length)
 {
-    uint8_t i=0;
+    uint8_t i=0,j=0;
     uint8_t mac[6]={0,0,0,0,0,0};
     etherGetMacAddress(mac); //get MAC address
     for (i = 0; i < HW_ADD_LENGTH; i++) //then fill up the ethernet dest and source address
@@ -35,32 +36,39 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
         ether->destAddress[i] = dest_mac[i];// set this up with the noaa mac address
         ether->sourceAddress[i] = mac[i];
     }
+    ether->frameType=htons(0x0800);
     ipHeader* ip = (ipHeader*)ether->data;
     ip->revSize = 0x45;
     ip->typeOfService = 0;
     ip->id = htons(0x0000);
-    ip->flagsAndOffset = DONT_FRAGMENT;
+    ip->flagsAndOffset = htons(DONT_FRAGMENT);
     ip->ttl = 128;
     ip->protocol = TCP_PROTOCOL;   //protocol value of tcp is 6
     ip->headerChecksum = 0;
-    ip->length=htons(IP_HEADER_SIZE + TCP_HEADER_SIZE + length);
+    if(flag==TCP_SYN)
+        ip->length=htons(TCP_HEADER_LENGTH + IP_HEADER_LENGTH + 0x04);
+    else
+        ip->length=htons(TCP_HEADER_LENGTH + IP_HEADER_LENGTH + length);
+    uint8_t temp[4];
+    etherGetIpAddress(temp);
     for (i = 0; i < IP_ADD_LENGTH; i++)
     {
-        uint8_t temp[4];
-        etherGetIpAddress(temp);
+
         ip->sourceIp[i]=temp[i];
         ip->destIp[i]=dest_ip[i];
     }
     etherCalcIpChecksum(ip);
     tcpHeader* tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
 
-    tcp->sourcePort=source_port;
+    tcp->sourcePort=htons(source_port);
     tcp->destPort=htons(dest_port);
-    tcp->sequenceNumber=htonl();
-    tcp->acknowledgementNumber=htonl();
-
-    tcp->windowSize=htons();// use a random value for this
-    tcp->checksum=0;
+    tcp->sequenceNumber=htonl(sequence);
+    tcp->acknowledgementNumber=htonl(acknowledge);
+    uint16_t temp1=0;
+    temp1=(5<<12) | flag;  // where 5<<12 is the length of the header shifted  towards the header length side and the flag value is anded at the LSB
+    tcp->offsetFields=htons(temp1);
+    tcp->windowSize=htons(1220);// used a random value for this
+    tcp->checksum=0x0000;
     tcp->urgentPointer=0;
 
     if(flag==TCP_SYN)
@@ -71,26 +79,22 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
         tcp->data[j++]=0x04;  // the next two bytes represent 1220 number in hex
         tcp->data[j++]=0xC4;
     }
-
-    while(len>0)
-    {
-        tcp
-
-    }
-
     //calculate the checksums for the packet
 
-    etherCalcTcpChecksum(tcp);
-    etherPutPacket(ether,ETHER_HEADER_SIZE+((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + j);
+    etherCalcTcpChecksum(ether);
+    if(length>0)
+        sequence+=length;
+    else
+        sequence+=1;
+    etherPutPacket(ether,ETHER_HEADER_SIZE+((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + j + length);
 }
 
 bool etherIsTcp(etherHeader* ether)
 {
     ipHeader* ip = (ipHeader*)ether->data;
-    tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
-    uint32_t sum = 0;
+//    tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
+//    uint32_t sum = 0;
     bool ok;
-    uint16_t tmp16;
     ok = (ip->protocol == 6);
     if (ok)
     {
@@ -203,9 +207,12 @@ bool isTcpReset(etherHeader *ether)
 
 void handleTcpSegment(etherHeader *ether)
 {
-    if()
+    ipHeader *ip = (ipHeader*)ether->data;
+    tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
+    if(curTcpState==TCP_RECEIVE_SYN_ACK && isTcpSynAck(ether))
     {
-
+        curTcpState=TCP_SEND_ACK;
+        acknowledge=htonl(tcp->sequenceNumber)+0x01;
     }
     else if(isTcpAcknowledgment(ether))
     {
@@ -214,10 +221,12 @@ void handleTcpSegment(etherHeader *ether)
         uint16_t offset=(htons(tcp->offsetFields)) & 0x0FFF;
         if(offset==TCP_SYNACK && curTcpState==TCP_RECEIVE_SYN_ACK)
         {
-            sequence=tcp->acknowledgementNumber;
-            acknowledge=htonl(tcp->sequenceNumber)+1;
+
             curTcpState=TCP_SEND_ACK;
         }
+    }
+    else if(isMqttConnectAck(ether) && curTcpState==MQTT_CONNECT_ACK)
+    {
 
     }
 }
@@ -235,10 +244,9 @@ void etherCalcTcpChecksum(etherHeader *ether)
     etherSumWords(ip->sourceIp,8,&sum);
     tmp16 = ip->protocol;
     sum += (tmp16 & 0xff) << 8;
-    etherSumWords(tcp,tcpHeaderLength, &sum);
     tmp16=htons(tcpHeaderLength);
     etherSumWords(&tmp16,2, &sum);
-
+    etherSumWords(tcp,tcpHeaderLength, &sum);
     tcp->checksum=getEtherChecksum(sum);
 
 }
@@ -265,38 +273,38 @@ bool etherCheckTcpCheckSum(etherHeader *ether)
     return (getEtherChecksum(sum)==0);
 }
 
-void buildTcpHeader(etherHeader *ether,uint8_t destMac[6],uint8_t dest_Ip[4],uint16_t sourcePort,uint16_t destinationPort,uint16_t flag,uint16_t length)
+void buildTcpHeader(etherHeader *ether,uint16_t destinationPort,uint8_t dest_ip[4],uint8_t dest_mac[6],uint16_t flag,uint16_t length)
 {
-    uint16_t len=length;
+   // uint16_t len=length;
     ipHeader* ip = (ipHeader*)ether->data;
     tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
     uint8_t mac[6]={0,0,0,0,0,0};
     etherGetMacAddress(mac);
-    uint8_t i=0,j=0;
+    uint8_t i=0;
     for(i=0;i<6;i++)
     {
-        ether->destAddress[i]=destMac[i];
+        ether->destAddress[i]=dest_mac[i];
         ether->sourceAddress[i]=mac[i];
     }
     ether->frameType=htons(0x0800);
     ip->revSize = 0x45; //size is 5 hence 5*4, the size of the IP is 20 bytes
     ip->typeOfService = 0;
-    ip->id = 0;
-    ip->flagsAndOffset = DONT_FRAGMENT;
+    ip->id = htons(0x0000);
+    ip->flagsAndOffset = htons(DONT_FRAGMENT);
     ip->ttl = 128;
     ip->protocol =TCP_PROTOCOL;
     ip->headerChecksum = htons(0x0000);
-    ip->length= htons(IP_HEADER_SIZE + TCP_HEADER_SIZE + length);
+    ip->length= htons(IP_HEADER_LENGTH + TCP_HEADER_LENGTH + length);
 
-    uint8_t ip[4]={0,0,0,0};
-    etherGetIpAddress(ip);
+    uint8_t my_ip[4]={0,0,0,0};
+    etherGetIpAddress(my_ip);
     for(i=0;i<4;i++)
     {
-        ip->destIp[i]=dest_Ip[i];
-        ip->sourceIp[i]=ip[i];
+        ip->destIp[i]=dest_ip[i];
+        ip->sourceIp[i]=my_ip[i];
     }
     etherCalcIpChecksum(ip);
-    tcp->sourcePort=htons(sourcePort);
+    tcp->sourcePort=htons(source_port);
     tcp->destPort=htons(destinationPort);
     tcp->sequenceNumber=htonl(sequence);
     tcp->acknowledgementNumber=htonl(acknowledge);
@@ -311,7 +319,11 @@ void buildTcpHeader(etherHeader *ether,uint8_t destMac[6],uint8_t dest_Ip[4],uin
 
 bool isTcpEnabled()
 {
-    return getTcpState()!=TCP_IDLE;
+    return curTcpState!=TCP_IDLE;
 }
 
+void updateSeqNumber(uint32_t n)
+{
+    sequence+=n;
+}
 

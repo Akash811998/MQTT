@@ -29,6 +29,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#define ntohs htons
+#define IP_ADD_LENGTH 4
+#define HW_ADD_LENGTH 6
+#define ETHER_HEADER_SIZE 0x0E
 
 // This M4F is little endian (TI hardwired it this way)
 // Network byte order is big endian
@@ -153,11 +157,15 @@ bool etherIsArpRequest(etherHeader *ether);
 void etherSendArpResponse(etherHeader *ether);
 void etherSendArpRequest(etherHeader *ether, uint8_t ipFrom[], uint8_t ipTo[]);
 
+void etherSumWords(void* data, uint16_t sizeInBytes, uint32_t* sum);
+uint16_t getEtherChecksum(uint32_t sum);
+
+
 bool etherIsUdp(etherHeader *ether);
 uint8_t* etherGetUdpData(etherHeader *ether);
 void etherSendUdpResponse(etherHeader *ether, uint8_t* udpData, uint8_t udpSize);
-
-
+bool isTcpEnabled();
+void etherCalcIpChecksum(ipHeader* ip);
 void etherEnableDhcpMode();
 void etherDisableDhcpMode();
 bool etherIsDhcpEnabled();
@@ -170,11 +178,10 @@ void etherSetIpSubnetMask(uint8_t mask0, uint8_t mask1, uint8_t mask2, uint8_t m
 void etherGetIpSubnetMask(uint8_t mask[4]);
 void etherSetMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, uint8_t mac4, uint8_t mac5);
 void etherGetMacAddress(uint8_t mac[6]);
+void etherSetHtmlIpAddress(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3);
+void etherGetHtmlIpAddress(uint8_t ip[4]);
 
 uint16_t htons(uint16_t value);
-#define ntohs htons
-#define IP_ADD_LENGTH 4
-#define HW_ADD_LENGTH 6
-#define ETHER_HEADER_SIZE 0x0E
+uint32_t htonl(uint32_t value);
 
 #endif

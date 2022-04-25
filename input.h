@@ -9,7 +9,8 @@
 #define INPUT_H_
 
 
-
+#define MAX_FIELDS 20
+#define MAX_CHARS 80
 typedef struct _USER_DATA
 {
     char buffer[MAX_CHARS+1];

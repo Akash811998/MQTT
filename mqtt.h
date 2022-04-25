@@ -16,6 +16,17 @@
 #define QOS1                    0x02
 #define QOS2                    0x04
 
+
+
+#define     CLEAN_SESSION       0x02     //1th bit
+#define     WILL_FLAG           0x04        //2th bit
+#define     WILL_QOS0               0x00         //3rd and 4th bit should be made 00
+#define     WILL_QOS1               0x10         //3rd and 4th bit should be made 01
+#define     WILL_QOS0               0x18         //3rd and 4th bit should be made 10
+#define     WILL_RETAIN             0x20       //5th bit
+#define     PASSWORD_FLAG           0x40     //6th bit
+#define     USER_NAME_FLAG          0x80
+
 //#define SEND_CONNECT            0x10
 //#define SEND_PUBLISH_QOS0       0x30
 //#define SEND_PUBLISH_QOS1       0x32
@@ -56,17 +67,17 @@ typedef enum _mqttPacketType
 }mqttPacketType;
 
 //defining the connect flags
- typedef enum _connect_flags
-{
-    CLEAN_SESSION=0x02,     //1th bit
-    WILL_FLAG=0x04,         //2th bit
-    WILL_QOS0=0x00,         //3rd and 4th bit should be made 00
-    WILL_QOS1=0x10,         //3rd and 4th bit should be made 01
-    WILL_QOS0=0x18,         //3rd and 4th bit should be made 10
-    WILL_RETAIN=0x20,       //5th bit
-    PASSWORD_FLAG=0x40,     //6th bit
-    USER_NAME_FLAG=0x80     //7th bit
-}connect_flags;
+// typedef enum _connect_flags
+//{
+//    CLEAN_SESSION=0x02,     //1th bit
+//    WILL_FLAG=0x04,         //2th bit
+//    WILL_QOS0=0x00,         //3rd and 4th bit should be made 00
+//    WILL_QOS1=0x10,         //3rd and 4th bit should be made 01
+//    WILL_QOS0=0x18,         //3rd and 4th bit should be made 10
+//    WILL_RETAIN=0x20,       //5th bit
+//    PASSWORD_FLAG=0x40,     //6th bit
+//    USER_NAME_FLAG=0x80     //7th bit
+//}connect_flags;
 
 
 typedef struct _mqttHeader
@@ -97,7 +108,6 @@ typedef struct _mqttSubscribeHeader
     uint16_t packet_id;
     uint16_t topic_length;
     char topic_name[];
-    uint8_t requested_qos;
 }mqttSubscribeHeader;
 
 typedef struct _mqttUnsubscribeHeader
@@ -118,6 +128,7 @@ bool isMqttPublishAck(etherHeader *ether);
 void mqttSendPing(etherHeader *ether);
 void mqttSendDisconnect(etherHeader *ether);
 bool isMqttPingAck(etherHeader *ether);
+bool isMqttLive();
 
 
 #endif /* MQTT_H_ */

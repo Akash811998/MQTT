@@ -30,8 +30,7 @@
 #include "uart0.h"
 #include "TCP.h"
 
-#define MAX_FIELDS 20
-#define MAX_CHARS 80
+
 bool flag=1;//for parsefield
 
 char str[50]; //for sprintf
