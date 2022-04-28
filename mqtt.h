@@ -22,7 +22,7 @@
 #define     WILL_FLAG           0x04        //2th bit
 #define     WILL_QOS0               0x00         //3rd and 4th bit should be made 00
 #define     WILL_QOS1               0x10         //3rd and 4th bit should be made 01
-#define     WILL_QOS0               0x18         //3rd and 4th bit should be made 10
+#define     WILL_QOS2               0x18         //3rd and 4th bit should be made 10
 #define     WILL_RETAIN             0x20       //5th bit
 #define     PASSWORD_FLAG           0x40     //6th bit
 #define     USER_NAME_FLAG          0x80
@@ -129,6 +129,11 @@ void mqttSendPing(etherHeader *ether);
 void mqttSendDisconnect(etherHeader *ether);
 bool isMqttPingAck(etherHeader *ether);
 bool isMqttLive();
+void etherSetMqttMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, uint8_t mac4, uint8_t mac5);
+void etherGetMqttMacAddress(uint8_t mac[6]);
+void etherSetMqttIpAddress(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3);
+void etherGetMqttIpAddress(uint8_t ip[4]);
+
 
 
 #endif /* MQTT_H_ */

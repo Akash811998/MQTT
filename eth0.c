@@ -131,6 +131,7 @@ uint8_t ipDnsAddress[IP_ADD_LENGTH] = {0,0,0,0};        //IP DNS ADDRESS
 //uint8_t ipTimeServerAddress[IP_ADD_LENGTH] = {0,0,0,0}; //IP TIMESERVER ADDRESS
 //uint8_t dhcpServerAddress[IP_ADD_LENGTH] = {0,0,0,0};
 uint8_t html_ip_address[4]={0,0,0,0};                   //IP ADDRESS OF THE HTTP PAGE
+uint8_t destMacAddress[6]={0,0,0,0,0,0};
 
 //bool    dhcpEnabled = true;
 
@@ -545,16 +546,22 @@ uint32_t htonl(uint32_t value)
 // Determines whether packet is IP datagram
 bool etherIsIp(etherHeader *ether)
 {
-    ipHeader *ip = (ipHeader*)ether->data;
-    uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4;
-    uint32_t sum = 0;
+    ipHeader *ip = (ipHeader*)ether->data;  //the ethernet header data space pointed to the IP header structure
+    uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4; //here we are extracting the header length which is of the 4 LSB bits of revsize and
+                                                       //as the header length values ranges from 5 to 15 and hence you need to multiply by 4
+                                                       //to get the total number of bytes
+    uint32_t sum = 0,i=0;
     bool ok;
-    ok = (ether->frameType == htons(0x0800));
-    if (ok)
-    {
-        etherSumWords(&ip->revSize, ipHeaderLength, &sum);
-        ok = (getEtherChecksum(sum) == 0);
-    }
+    ok = (ether->frameType == htons(0x0800)); //htons is the berkley sockets standard model extension to intercept the message in the opposite way
+                                              //htons is host to network order i.e it converts little endian to network order
+//    while(i<4)                             //if the eth type is IP then  verify the checksum of the entire IP header
+//    {
+//        ok&=(ipAddress[i]==ip->destIp[i]);
+//        i++;
+//    }
+    etherSumWords(&ip->revSize, ipHeaderLength, &sum);  //computes the checksum
+    ok&= (getEtherChecksum(sum) == 0);
+
     return ok;
 }
 
@@ -920,5 +927,23 @@ void etherGetMacAddress(uint8_t mac[6])
     uint8_t i;
     for (i = 0; i < 6; i++)
         mac[i] = hwAddress[i];
+}
+void etherSetDestMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, uint8_t mac4, uint8_t mac5)
+{
+    destMacAddress[0] = mac0;
+    destMacAddress[1] = mac1;
+    destMacAddress[2] = mac2;
+    destMacAddress[3] = mac3;
+    destMacAddress[4] = mac4;
+    destMacAddress[5] = mac5;
+
+}
+
+// Gets MAC address
+void etherGetDestMacAddress(uint8_t mac[6])
+{
+    uint8_t i;
+    for (i = 0; i < 6; i++)
+        mac[i] = destMacAddress[i];
 }
 

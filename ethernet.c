@@ -47,11 +47,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "tm4c123gh6pm.h"
 #include "eth0.h"
 #include "gpio.h"
 #include "spi0.h"
-#include "time.h"
 #include "uart0.h"
 #include "wait.h"
 #include "input.h"
@@ -98,7 +98,7 @@ char* subscribeTopic;
 char* unsubscribeTopic;
 
 uint16_t source_port=0;
-bool access_html_page=false;
+bool access_html_page=true;
 
 char* clientID="akash";
 extern uint8_t html_ip_address[4];
@@ -128,6 +128,8 @@ int main(void)
     etherSetIpAddress(192, 168, 1, 117);
     etherSetIpSubnetMask(255, 255, 255, 0);
     etherSetIpGatewayAddress(192, 168, 1, 1);
+    etherSetDestMacAddress(0x14,0x59,0xc0,0x4d,0x43,0x80);
+    etherSetHtmlIpAddress(23,33,56,87);
     etherInit(ETHER_UNICAST | ETHER_BROADCAST | ETHER_HALFDUPLEX);
     waitMicrosecond(100000);
     displayConnectionInfo();
@@ -161,7 +163,11 @@ int main(void)
             {
                 if(access_html_page==1)
                 {
-                    sendTcpMsg(data,TCP_SYN,HTTP_PORT,html_ip_address,html_mac_address,0);
+                    uint8_t dest_mac[6],dest_ip[4];
+                    etherGetDestMacAddress(dest_mac);
+                    etherGetHtmlIpAddress(dest_ip);
+                    sendTcpMsg(data,TCP_SYN,HTTP_PORT,dest_ip,dest_mac,0);
+                    setTcpState(TCP_RECEIVE_SYN_ACK);
                 }
                 else
                 {

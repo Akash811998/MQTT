@@ -9,14 +9,17 @@
 #include "tm4c123gh6pm.h"
 #include "TCP.h"
 #include "eth0.h"
+#include "input.h"
 
-#define TCP_PROTOCOL 0x06
-#define DONT_FRAGMENT 0x4000
+#define TCP_PROTOCOL        0x06
+#define DONT_FRAGMENT       0x4000
+#define OPTIONS_FOR_SYNC    0x04
 
 uint8_t curTcpState=TCP_IDLE;
 uint32_t sequence=0;
 uint32_t acknowledge=0;
 extern uint16_t source_port;
+char *a="GET /cdo-web/api/v2/datasets HTTP/1.1\r\nAuthorization: Bearer {token}\r\nHOST: ncdc.noaa.gov\r\nToken: RYZCRVvDbnuopszBdnwxtecCfBDpXocG\r\n\r\n";
 void setTcpState(uint8_t state)
 {
     curTcpState=state;
@@ -26,9 +29,9 @@ uint8_t getTcpState()
     return curTcpState;
 }
 
-void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],uint16_t length)
+void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],char *html)
 {
-    uint8_t i=0,j=0;
+    uint8_t i=0,j=0,k=0;
     uint8_t mac[6]={0,0,0,0,0,0};
     etherGetMacAddress(mac); //get MAC address
     for (i = 0; i < HW_ADD_LENGTH; i++) //then fill up the ethernet dest and source address
@@ -45,8 +48,9 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
     ip->ttl = 128;
     ip->protocol = TCP_PROTOCOL;   //protocol value of tcp is 6
     ip->headerChecksum = 0;
+    uint8_t length=strLength(html);
     if(flag==TCP_SYN)
-        ip->length=htons(TCP_HEADER_LENGTH + IP_HEADER_LENGTH + 0x04);
+        ip->length=htons(TCP_HEADER_LENGTH + IP_HEADER_LENGTH + OPTIONS_FOR_SYNC);
     else
         ip->length=htons(TCP_HEADER_LENGTH + IP_HEADER_LENGTH + length);
     uint8_t temp[4];
@@ -60,14 +64,17 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
     etherCalcIpChecksum(ip);
     tcpHeader* tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
 
-    tcp->sourcePort=htons(source_port);
+    tcp->sourcePort=source_port;  //htons is done when the value of the source port was found
     tcp->destPort=htons(dest_port);
     tcp->sequenceNumber=htonl(sequence);
     tcp->acknowledgementNumber=htonl(acknowledge);
     uint16_t temp1=0;
-    temp1=(5<<12) | flag;  // where 5<<12 is the length of the header shifted  towards the header length side and the flag value is anded at the LSB
+    if(flag==TCP_SYN)
+        temp1=(0x6000 & 0xF000) | flag;  // where 5<<12 is the length of the header shifted  towards the header length side and the flag value is anded at the LSB
+    else
+        temp1=(0x5000 & 0xF000) | flag; // where 5<<12 is the length of the header shifted  towards the header length side and the flag value is anded at the LSB
     tcp->offsetFields=htons(temp1);
-    tcp->windowSize=htons(1220);// used a random value for this
+    tcp->windowSize=htons(0x0578);// used a random value for this
     tcp->checksum=0x0000;
     tcp->urgentPointer=0;
 
@@ -76,8 +83,13 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
         //defining the maximum segment size(window size) telling the receiver that the the device is only capacble of accepting 1220 extra bytes excluding IP, ether and TCP header
         tcp->data[j++]=0x02;  //kind
         tcp->data[j++]=0x04;  //length in number of bytes
-        tcp->data[j++]=0x04;  // the next two bytes represent 1220 number in hex
-        tcp->data[j++]=0xC4;
+        tcp->data[j++]=0x05;  // the next two bytes represent 1400 number in hex
+        tcp->data[j++]=0x78;
+    }
+    if(flag==TCP_PUSH_ACK)
+    {;
+        for(k=0;k<length;k++)
+            tcp->data[k]=html[k];
     }
     //calculate the checksums for the packet
 
@@ -261,7 +273,6 @@ bool etherCheckTcpCheckSum(etherHeader *ether)
     tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
     uint32_t sum = 0;
     uint16_t tmp16=0;
-    tcp->checksum = 0;
     uint16_t tcpHeaderLength=htons(ip->length)-IP_HEADER_LENGTH;
     etherSumWords(ip->sourceIp,8,&sum);
     tmp16 = ip->protocol;

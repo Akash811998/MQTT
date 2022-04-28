@@ -258,11 +258,12 @@ bool isMqttPingAck(etherHeader *ether)
     return ok;
 }
 
-void etherSetMqttIpAddress(const uint8_t ip[4])
+void etherSetMqttIpAddress(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3)
 {
-    uint8_t i;
-    for (i = 0; i < 4; i++)
-        mqttIpAddress[i] = ip[i];
+    mqttIpAddress[0] = ip0;
+    mqttIpAddress[1] = ip1;
+    mqttIpAddress[2] = ip2;
+    mqttIpAddress[3] = ip3;
 }
 void etherGetMqttIpAddress(uint8_t ip[4])
 {
@@ -270,11 +271,15 @@ void etherGetMqttIpAddress(uint8_t ip[4])
     for (i = 0; i < 4; i++)
         ip[i] = mqttIpAddress[i];
 }
-void etherSetMqttMacAddress(const uint8_t mac[6])
+
+void etherSetMqttMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, uint8_t mac4, uint8_t mac5)
 {
-    uint8_t i;
-    for (i = 0; i < 4; i++)
-        mqttMacAddress[i] = mac[i];
+    mqttMacAddress[0] = mac0;
+    mqttMacAddress[1] = mac1;
+    mqttMacAddress[2] = mac2;
+    mqttMacAddress[3] = mac3;
+    mqttMacAddress[4] = mac4;
+    mqttMacAddress[5] = mac5;
 }
 void etherGetMqttMacAddress(uint8_t mac[6])
 {

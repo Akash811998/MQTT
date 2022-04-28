@@ -15,7 +15,7 @@
 #define IP_HEADER_LENGTH 20
 
 
-void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],uint16_t length);
+void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],char*);
 bool isTcpAcknowledgment(etherHeader *ether);
 bool isTcpSyn(etherHeader *ether);
 void setTcpState(uint8_t state);
