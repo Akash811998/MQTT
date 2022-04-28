@@ -180,6 +180,9 @@ void etherSetMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, 
 void etherGetMacAddress(uint8_t mac[6]);
 void etherSetHtmlIpAddress(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3);
 void etherGetHtmlIpAddress(uint8_t ip[4]);
+void etherSetDestMacAddress(uint8_t mac0, uint8_t mac1, uint8_t mac2, uint8_t mac3, uint8_t mac4, uint8_t mac5);
+void etherGetDestMacAddress(uint8_t ip[4]);
+
 
 uint16_t htons(uint16_t value);
 uint32_t htonl(uint32_t value);

@@ -18,6 +18,7 @@ TCP.obj: ../tm4c123gh6pm.h
 TCP.obj: ../TCP.h
 TCP.obj: ../eth0.h
 TCP.obj: ../input.h
+TCP.obj: ../mqtt.h
 
 ../TCP.c:
 
@@ -54,4 +55,6 @@ C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/stdarg.h:
 ../eth0.h:
 
 ../input.h:
+
+../mqtt.h:
 

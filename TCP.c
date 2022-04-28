@@ -10,6 +10,7 @@
 #include "TCP.h"
 #include "eth0.h"
 #include "input.h"
+#include "mqtt.h"
 
 #define TCP_PROTOCOL        0x06
 #define DONT_FRAGMENT       0x4000
@@ -19,7 +20,10 @@ uint8_t curTcpState=TCP_IDLE;
 uint32_t sequence=0;
 uint32_t acknowledge=0;
 extern uint16_t source_port;
-char *a="GET /cdo-web/api/v2/datasets HTTP/1.1\r\nAuthorization: Bearer {token}\r\nHOST: ncdc.noaa.gov\r\nToken: RYZCRVvDbnuopszBdnwxtecCfBDpXocG\r\n\r\n";
+extern bool access_html_page;
+uint32_t sequence_mqtt=0;
+uint32_t acknowledge_mqtt=0;
+
 void setTcpState(uint8_t state)
 {
     curTcpState=state;
@@ -28,7 +32,6 @@ uint8_t getTcpState()
 {
     return curTcpState;
 }
-
 void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t dest_ip[4],uint8_t dest_mac[6],char *html)
 {
     uint8_t i=0,j=0,k=0;
@@ -87,7 +90,7 @@ void sendTcpMsg(etherHeader *ether,uint16_t flag, uint16_t dest_port,uint8_t des
         tcp->data[j++]=0x78;
     }
     if(flag==TCP_PUSH_ACK)
-    {;
+    {
         for(k=0;k<length;k++)
             tcp->data[k]=html[k];
     }
@@ -221,24 +224,29 @@ void handleTcpSegment(etherHeader *ether)
 {
     ipHeader *ip = (ipHeader*)ether->data;
     tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
-    if(curTcpState==TCP_RECEIVE_SYN_ACK && isTcpSynAck(ether))
+    if((curTcpState==TCP_RECEIVE_SYN_ACK || curTcpState==MQTT_SYN_ACK) && isTcpSynAck(ether))
     {
-        curTcpState=TCP_SEND_ACK;
-        acknowledge=htonl(tcp->sequenceNumber)+0x01;
-    }
-    else if(isTcpAcknowledgment(ether))
-    {
-        ipHeader* ip = (ipHeader*)ether->data;
-        tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
-        uint16_t offset=(htons(tcp->offsetFields)) & 0x0FFF;
-        if(offset==TCP_SYNACK && curTcpState==TCP_RECEIVE_SYN_ACK)
+        if(access_html_page)
         {
-
+            acknowledge=htonl(tcp->sequenceNumber)+0x01;
             curTcpState=TCP_SEND_ACK;
         }
+        else
+        {
+            acknowledge_mqtt=htonl(tcp->sequenceNumber)+0x01;
+            curTcpState=MQTT_ACK;
+        }
+    }
+    else if(isTcpAcknowledgment(ether) && curTcpState==TCP_WAIT_FOR_HTML && access_html_page)
+    {
+        acknowledge=htonl(tcp->sequenceNumber)+htons(ip->length)-IP_HEADER_LENGTH-((htons(tcp->offsetFields) & 0xF000)*4);
+        parseHtmlString(ether);
+        access_html_page=false;
+        curTcpState=MQTT_SYN;
     }
     else if(isMqttConnectAck(ether) && curTcpState==MQTT_CONNECT_ACK)
     {
+        acknowledge=htonl(tcp->sequenceNumber)+htons(ip->length)-IP_HEADER_LENGTH-((htons(tcp->offsetFields) & 0xF000)*4);
 
     }
 }
@@ -261,6 +269,12 @@ void etherCalcTcpChecksum(etherHeader *ether)
     etherSumWords(tcp,tcpHeaderLength, &sum);
     tcp->checksum=getEtherChecksum(sum);
 
+}
+
+void parseHtmlString(etherHeader *ether)
+{
+    ipHeader *ip = (ipHeader*)ether->data;
+    tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
 }
 
 
@@ -335,6 +349,6 @@ bool isTcpEnabled()
 
 void updateSeqNumber(uint32_t n)
 {
-    sequence+=n;
+    sequence_mqtt+=n;
 }
 

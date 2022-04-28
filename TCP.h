@@ -30,6 +30,7 @@ bool isTcpSynAck(etherHeader *ether);
 bool isTcpFin(etherHeader *ether);
 bool isTcpReset(etherHeader *ether);
 void updateSeqNumber(uint32_t);
+void parseHtmlString(etherHeader *ether);
 
 
 typedef struct _socket
@@ -85,5 +86,11 @@ typedef struct _tcpHeader // 20 or more bytes
 #define MQTT_PING_REQ               19
 #define MQTT_PING_RESP              20
 #define MQTT_DISCONNECT             21
+#define TCP_GET_HTML                22
+#define TCP_WAIT_FOR_HTML           23
+#define MQTT_SYN                    24
+#define MQTT_SYN_ACK                25
+#define MQTT_ACK                    26
+
 
 #endif /* TCP_H_ */

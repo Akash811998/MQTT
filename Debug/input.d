@@ -21,6 +21,7 @@ input.obj: ../input.h
 input.obj: ../uart0.h
 input.obj: ../TCP.h
 input.obj: ../eth0.h
+input.obj: ../mqtt.h
 
 ../input.c:
 
@@ -63,4 +64,6 @@ C:/ti/ccs1110/ccs/tools/compiler/ti-cgt-arm_20.2.5.LTS/include/xlocale/_string.h
 ../TCP.h:
 
 ../eth0.h:
+
+../mqtt.h:
 

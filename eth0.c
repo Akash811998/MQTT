@@ -550,7 +550,7 @@ bool etherIsIp(etherHeader *ether)
     uint8_t ipHeaderLength = (ip->revSize & 0xF) * 4; //here we are extracting the header length which is of the 4 LSB bits of revsize and
                                                        //as the header length values ranges from 5 to 15 and hence you need to multiply by 4
                                                        //to get the total number of bytes
-    uint32_t sum = 0,i=0;
+    uint32_t sum = 0;
     bool ok;
     ok = (ether->frameType == htons(0x0800)); //htons is the berkley sockets standard model extension to intercept the message in the opposite way
                                               //htons is host to network order i.e it converts little endian to network order

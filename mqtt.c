@@ -8,6 +8,7 @@
 #define MQTT_UNSUBSCRIBE_PACKET_LENGTH          0x04
 #define MQTT_HEADER_FLAG_AND_REMAINING_LENGTH   0x02        //HEADER FLAG AND REMAINING LENGTH
 #define MQTT_VERSION_V311                       0x04
+#define MQTT_PORT                               1883
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -16,6 +17,8 @@
 #include "mqtt.h"
 #include "TCP.h"
 #include "input.h"
+#include "eth0.h"
+
 
 
 uint8_t mqttIpAddress[IP_ADD_LENGTH] = {0,0,0,0};
@@ -38,7 +41,7 @@ void mqttSendConnect(etherHeader *ether,char* client_name,uint8_t connectFlag)
     mqttVariable->protocol_name[1]='Q';
     mqttVariable->protocol_name[2]='T';
     mqttVariable->protocol_name[3]='T';
-    mqttVariable->protocol_level=MQTT_VERSION_V311; //mqtt version
+    mqttVariable->protocol_level=MQTT_VERSION_V311;     //mqtt version
 
     mqttVariable->connect_flags=connectFlag;            //clean session
     mqttVariable->keep_alive=htons(0xFFFF);              //keep it alive for 65535 seconds
@@ -50,7 +53,7 @@ void mqttSendConnect(etherHeader *ether,char* client_name,uint8_t connectFlag)
         client->clientName[j++]=client_name[i++];
         clientIdLength--;
     }
-    buildTcpHeader(ether,1883,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
+    buildTcpHeader(ether,MQTT_PORT,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     etherPutPacket(ether,ETHER_HEADER_SIZE+((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + mqtt->remaining_length+ MQTT_HEADER_FLAG_AND_REMAINING_LENGTH); //0x02 for mqtt packet and remaining length
     updateSeqNumber(mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
 }
@@ -85,7 +88,7 @@ void mqttSendPublish(etherHeader *ether,uint8_t qos,char* topicName,char* messag
         mqtt->data[j++]=message[i++];
         message_length--;
     }
-    buildTcpHeader(ether,1883,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
+    buildTcpHeader(ether,MQTT_PORT,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     etherPutPacket(ether,ETHER_HEADER_SIZE+((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + mqtt->remaining_length+ MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     updateSeqNumber(mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
 }
@@ -109,9 +112,7 @@ void mqttSendSubscribe(etherHeader *ether,char* topicName,uint16_t subscribe_Id)
     }
     subscribe->topic_name[j]=0x00;
 
-
-
-    buildTcpHeader(ether,1883,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
+    buildTcpHeader(ether,MQTT_PORT,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     etherPutPacket(ether,ETHER_HEADER_SIZE + ((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + mqtt->remaining_length + MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     updateSeqNumber(mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
 }
@@ -135,7 +136,7 @@ void mqttSendUnsubscribe(etherHeader *ether,char* topicName,uint16_t subscribe_I
     }
 
 
-    buildTcpHeader(ether,1883,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
+    buildTcpHeader(ether,MQTT_PORT,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     etherPutPacket(ether,ETHER_HEADER_SIZE + ((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + mqtt->remaining_length + MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     updateSeqNumber(mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
 
@@ -161,27 +162,27 @@ void mqttSendPing(etherHeader *ether)
     mqtt->control_header=(uint8_t)PINGREQ; //where C is for control field for ping
 
     mqtt->remaining_length=0x00;
-    buildTcpHeader(ether,1883,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
+    buildTcpHeader(ether,MQTT_PORT,mqttIpAddress,mqttMacAddress,TCP_PUSH_ACK,mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     etherPutPacket(ether,ETHER_HEADER_SIZE + ((ip->revSize & 0xF) * 4) + TCP_HEADER_LENGTH + mqtt->remaining_length + MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
     updateSeqNumber(mqtt->remaining_length+MQTT_HEADER_FLAG_AND_REMAINING_LENGTH);
 }
 bool isMqttConnectAck(etherHeader *ether)
 {
-    uint8_t temp[6];
-    uint8_t i=0;
-    bool ok=1;
-    etherGetMacAddress(temp);
-    for(i=0;i<6;i++)
-    {
-        ok&=(temp[i]==ether->destAddress[i]);
-    }
+//    uint8_t temp[6];
+//    uint8_t i=0;
+    bool ok=true;
+//    etherGetMacAddress(temp);
+//    for(i=0;i<6;i++)
+//    {
+//        ok&=(temp[i]==ether->destAddress[i]);
+//    }
 
     ipHeader* ip = (ipHeader*)ether->data;
     tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
     mqttHeader *mqtt=(mqttHeader*)tcp->data;
     ok&=(mqtt->control_header==CONNACK);
-    ok&=(mqtt->data[0]==0x00); //acknowledge flags should be 0x00
-    ok&=(mqtt->data[1]==0x00); //return code is 0x00 i.e the connection is accepted by the broker
+    ok&=(mqtt->data[0]==0x00);                  //acknowledge flags should be 0x00
+    ok&=(mqtt->data[1]==0x00);                  //return code is 0x00 i.e the connection is accepted by the broker
 
     return ok;
 
@@ -207,14 +208,8 @@ bool isMqttSubscribeAck(etherHeader *ether)
 
 bool isMqttPublishAck(etherHeader *ether)
 {
-    uint8_t temp[6];
-    uint8_t i=0;
     bool ok=1;
-    etherGetMacAddress(temp);
-    for(i=0;i<6;i++)
-    {
-        ok&=(temp[i]==ether->destAddress[i]);
-    }
+
     ipHeader* ip = (ipHeader*)ether->data;
     tcpHeader *tcp=(tcpHeader*)((uint8_t*)ip + ((ip->revSize & 0xF) * 4));
     mqttHeader *mqtt=(mqttHeader*)tcp->data;

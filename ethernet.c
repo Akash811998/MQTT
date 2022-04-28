@@ -47,7 +47,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
+#include <stdlib.h>
+#include<time.h>
 #include "tm4c123gh6pm.h"
 #include "eth0.h"
 #include "gpio.h"
@@ -105,6 +106,7 @@ extern uint8_t html_ip_address[4];
 extern uint8_t html_mac_address[6];
 extern uint8_t mqttIpAddress[4];
 extern uint8_t mqttMacAddress[6];
+char *a="GET /cdo-web/api/v2/datasets HTTP/1.1\r\nAuthorization: Bearer {token}\r\nHOST: ncdc.noaa.gov\r\nToken: RYZCRVvDbnuopszBdnwxtecCfBDpXocG\r\n\r\n";
 //-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
@@ -124,7 +126,7 @@ int main(void)
     // Init ethernet interface (eth0)
     putsUart0("\nStarting eth0\n");
     etherSetMacAddress(2, 3, 4, 5, 6, 117);
-    etherDisableDhcpMode();
+    //etherDisableDhcpMode();
     etherSetIpAddress(192, 168, 1, 117);
     etherSetIpSubnetMask(255, 255, 255, 0);
     etherSetIpGatewayAddress(192, 168, 1, 1);
@@ -173,16 +175,16 @@ int main(void)
                 {
                     sendTcpMsg(data,TCP_SYN,MQTT_PORT,mqttIpAddress,mqttMacAddress,0);
                 }
-                setTcpState(TCP_RECEIVE_SYN_ACK);
-
-
             }
             else if(state==TCP_SEND_ACK)
             {
                 if(access_html_page==1)
                 {
-                    sendTcpMsg(data,TCP_ACK,HTTP_PORT,html_ip_address,html_mac_address,0);
-                    setTcpState(TCP_LIVE);
+                    uint8_t dest_mac[6],dest_ip[4];
+                    etherGetDestMacAddress(dest_mac);
+                    etherGetHtmlIpAddress(dest_ip);
+                    sendTcpMsg(data,TCP_ACK,HTTP_PORT,dest_ip,dest_mac,0);
+                    setTcpState(TCP_GET_HTML);
                 }
                 else
                 {
@@ -190,10 +192,35 @@ int main(void)
                     setTcpState(MQTT_CONNECT);
                 }
             }
+            else if(state==TCP_GET_HTML && access_html_page)
+            {
+                uint8_t dest_mac[6],dest_ip[4];
+                etherGetDestMacAddress(dest_mac);
+                etherGetHtmlIpAddress(dest_ip);
+                sendTcpMsg(data,TCP_ACK,HTTP_PORT,dest_ip,dest_mac,a);
+                setTcpState(TCP_WAIT_FOR_HTML);
+            }
+            else if(state==MQTT_SYN)
+            {
+                uint8_t dest_mac[6],dest_ip[4];
+                etherGetMqttMacAddress(dest_mac);
+                etherGetMqttIpAddress(dest_ip);
+                sendTcpMsg(data,TCP_SYN,MQTT_PORT,dest_ip,dest_mac,0);
+                setTcpState(MQTT_SYN_ACK);
+            }
             else if(state==MQTT_CONNECT)
             {
                 mqttSendConnect(data,clientID,CLEAN_SESSION);
                 setTcpState(MQTT_CONNECT_ACK);
+            }
+            else if(state==MQTT_DISCONNECT)
+            {
+                mqttSendDisconnect(data);
+                setTcpState(TCP_SEND_FIN);
+            }
+            else if(state==TCP_SEND_FIN)
+            {
+
             }
 
         }

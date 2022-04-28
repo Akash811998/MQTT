@@ -29,7 +29,8 @@
 #include "input.h"
 #include "uart0.h"
 #include "TCP.h"
-
+#include "eth0.h"
+#include "mqtt.h"
 
 bool flag=1;//for parsefield
 
@@ -42,6 +43,7 @@ extern char* publishTopic;
 extern char* publishData;
 extern char* subscribeTopic;
 extern char* unsubscribeTopic;
+extern bool mqttlive;
 
 bool isCommand(USER_DATA* data, const char strCommand[], uint8_t minArguments)
 {
@@ -290,41 +292,42 @@ void processInputCommands()
         else if(isCommand(&data,"publish",2)) //publish the topic name and the data
         {
             valid=true;
-            if(getTcpState()!=mqttActive)
-                putsUart0("Connection to the broker should be published before you publish a message");
+            if(mqttlive==false)
+                putsUart0("Connection to the broker should be established before you publish a message");
             else
             {
                 publishTopic=getFieldString(&data, 1);
                 publishData=getFieldString(&data, 2);
-                setTcpState(mqttPublishData);
+                setTcpState(MQTT_SEND_PUBLISH0);
             }
         }
         else if(isCommand(&data,"disconnect",0)) //sends a disconnect request to the broker
         {
             valid=true;
-            setTcpState(TCP_SEND_FIN);
+            setTcpState(MQTT_DISCONNECT);
         }
         else if(isCommand(&data,"reboot",0))
         {
+            valid=true;
             //if tcp active, then send a fin message and deactivate the TCP
             //basically send a MQTT disconnect message and restart the device
             //then restart the device
         }
         else if(isCommand(&data,"help",0))
         {
-
+            valid=true;
         }
         else if(isCommand(&data,"set",0)) //set the IP address or mqtt ip address
         {
-
+            valid=true;
         }
         else if(isCommand(&data,"subscribe",1))  //subscribe to a topic
         {
-
+            valid=true;
         }
         else if(isCommand(&data,"unsubscribe",1)) //unsubscribe to a topic
         {
-
+            valid=true;
         }
 
 
